@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist_Mono, Geist } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 import Providers from "./providers";
 import { env } from "@/lib/zod";
 import { Navbar } from "@/components/custom-ui/navbar";
 
-const inter = Inter({ subsets: ["latin"] });
+const _geist = Geist({ subsets: ["latin"] });
+const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: `${env.NEXT_PUBLIC_APPLICATION_NAME}`,
@@ -21,8 +22,8 @@ export default async function RootLayout({
   const cookies = (await headers()).get("cookie");
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} size-full antialiased`}>
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className={`${_geist.className} ${_geistMono.className} antialiased`}>
         <Providers cookies={cookies}>
           <Navbar />
           {children}
