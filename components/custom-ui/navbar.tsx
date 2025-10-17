@@ -1,18 +1,62 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Menu, X } from "lucide-react"
-import { Button } from "@/components/shadcn-ui/button"
-import { motion, AnimatePresence } from "motion/react"
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Copy, Loader2, Menu, X } from "lucide-react";
+import { Button } from "@/components/shadcn-ui/button";
+import { motion, AnimatePresence } from "motion/react";
+import { usePathname } from "next/navigation";
+import { cn, copyToClipboard, formatAvatarSrc, formatWalletAddress } from "@/lib/utils";
+import { useAppKit } from "@reown/appkit/react";
+import { useAccount } from "wagmi";
+import { getEnsAvatar, getEnsName } from "@/lib/ens/client";
+import { DEFAULT_AVATAR } from "@/lib/constants";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../shadcn-ui/dropdown-menu";
 
 export function Navbar() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [isFetchingName, setIsFetchingName] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { address } = useAccount();
+  const { open } = useAppKit();
 
   const navLinks = [
     { href: "/bridge", label: "Bridge" },
     { href: "/transfer", label: "Transfer" },
-  ]
+  ];
+
+  // Pathname
+  const pathname = usePathname();
+
+  // Set mounted to true after component mounts on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // When the user connects their wallet, set the username
+  useEffect(() => {
+    if (!address) return;
+    const fetchUsername = async () => {
+      setIsFetchingName(true);
+      const username = await getEnsName(address);
+      setUsername(username || formatWalletAddress(address));
+      if (username) {
+        const avatar = await getEnsAvatar(username);
+        setAvatar(avatar ? formatAvatarSrc(avatar as string) : null);
+      }
+      setIsFetchingName(false);
+    };
+    fetchUsername();
+  }, [address]);
 
   return (
     <motion.nav
@@ -20,41 +64,44 @@ export function Navbar() {
       animate={{ y: 0 }}
       className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl"
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+      <div className="w-full px-4 sm:px-6 lg:px-10">
+        <div className="flex h-16 sm:h-20 items-center justify-between">
           {/* Desktop Logo - Left */}
           <Link href="/" className="hidden md:block cursor-pointer">
             <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-2">
-              <div className="relative h-8 w-8">
+              <div className="relative size-9">
                 <div className="absolute inset-0 rounded-lg bg-primary/20 blur-sm" />
                 <div className="relative flex h-full w-full items-center justify-center rounded-lg border border-primary bg-card">
-                  <span className="font-mono text-sm font-bold text-primary glow-text">Ø</span>
+                  <span className="text-2xl font-bold text-primary glow-text">Ø</span>
                 </div>
               </div>
-              <span className="font-mono text-lg font-bold text-primary glow-text">CYPHER</span>
+              <span className="text-3xl font-bold text-primary glow-text">NYDUS</span>
             </motion.div>
           </Link>
 
           {/* Mobile Logo - Center */}
           <Link href="/" className="md:hidden absolute left-1/2 -translate-x-1/2 cursor-pointer">
             <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-2">
-              <div className="relative h-8 w-8">
+              <div className="relative size-7">
                 <div className="absolute inset-0 rounded-lg bg-primary/20 blur-sm" />
                 <div className="relative flex h-full w-full items-center justify-center rounded-lg border border-primary bg-card">
-                  <span className="font-mono text-sm font-bold text-primary glow-text">Ø</span>
+                  <span className="font-bold text-primary glow-text">Ø</span>
                 </div>
               </div>
-              <span className="font-mono text-lg font-bold text-primary glow-text">CYPHER</span>
+              <span className="text-2xl font-bold text-primary glow-text">NYDUS</span>
             </motion.div>
           </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
-              <Link key={link.href} href={{pathname: link.href}} className="cursor-pointer">
+              <Link key={link.href} href={{ pathname: link.href }} className="cursor-pointer">
                 <motion.span
                   whileHover={{ scale: 1.05 }}
-                  className="font-mono text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className={cn(
+                    "text-xl text-muted-foreground hover:text-primary transition-colors",
+                    pathname === link.href && "text-primary"
+                  )}
                 >
                   {link.label}
                 </motion.span>
@@ -63,10 +110,77 @@ export function Navbar() {
           </div>
 
           {/* Desktop Connect Button */}
-          <div className="hidden md:block">
-            <Button className="font-mono bg-primary text-primary-foreground hover:bg-primary/90 glow-border">
-              Connect Wallet
-            </Button>
+          <div className="hidden md:block w-[190px]">
+            <AnimatePresence mode="wait">
+              {!mounted || isFetchingName ? (
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center justify-center w-full"
+                >
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </motion.div>
+              ) : !address ? (
+                <motion.div
+                  key="not-connected"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center justify-end w-full"
+                >
+                  <Button
+                    onClick={() => open({ view: "Connect" })}
+                    className="bg-primary text-lg text-primary-foreground hover:bg-primary/90 glow-border"
+                  >
+                    Connect Wallet
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="connected"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center justify-end w-full"
+                >
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="flex items-center justify-center gap-3 cursor-pointer">
+                      <span className="text-lg text-muted-foreground">{username}</span>
+                      <img
+                        src={avatar || DEFAULT_AVATAR}
+                        alt={username || "Default Avatar"}
+                        className="size-9 rounded-full"
+                      />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() =>
+                          copyToClipboard(address, "Address copied", "Failed to copy address")
+                        }
+                        className="flex items-center justify-start gap-2 cursor-pointer w-full"
+                      >
+                        Copy <Copy />
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Button
+                          onClick={() => open({ view: "Account" })}
+                          className="bg-red-500 text-sm text-primary-foreground hover:bg-red-500/90 glow-border"
+                        >
+                          Disconnect Wallet
+                        </Button>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Mobile Menu Button */}
@@ -97,9 +211,12 @@ export function Navbar() {
                   transition={{ delay: index * 0.1 }}
                 >
                   <Link
-                    href={{pathname: link.href}}
+                    href={{ pathname: link.href }}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block py-2 font-mono text-lg text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                    className={cn(
+                      "block py-2 text-lg text-muted-foreground hover:text-primary transition-colors cursor-pointer",
+                      pathname === link.href && "text-primary"
+                    )}
                   >
                     {link.label}
                   </Link>
@@ -110,7 +227,7 @@ export function Navbar() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: navLinks.length * 0.1 }}
               >
-                <Button className="w-full font-mono bg-primary text-primary-foreground hover:bg-primary/90 glow-border">
+                <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 glow-border">
                   Connect Wallet
                 </Button>
               </motion.div>
@@ -119,5 +236,5 @@ export function Navbar() {
         )}
       </AnimatePresence>
     </motion.nav>
-  )
+  );
 }

@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { formatDistance } from "date-fns";
 import ky from "ky";
+import { toast } from "sonner";
 import { twMerge } from "tailwind-merge";
 
 /**
@@ -95,11 +96,13 @@ export const formatAvatarSrc = (url: string) => {
 /**
  * Copy text to clipboard
  * @param text - The text to copy
- * @param setIsCopied - The function to set the show copied state
+ * @param successMessage - The message to show when the text is copied
+ * @param errorMessage - The message to show when the text is not copied
  */
 export const copyToClipboard = async (
   text: string | undefined,
-  setIsCopied: React.Dispatch<React.SetStateAction<boolean>>
+  successMessage: string,
+  errorMessage: string
 ) => {
   if (!text) {
     return;
@@ -107,24 +110,20 @@ export const copyToClipboard = async (
 
   try {
     await navigator.clipboard.writeText(text);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 750);
+    toast.success(successMessage);
   } catch (_err) {
     const textArea = document.createElement("textarea");
     textArea.value = text;
     textArea.style.position = "fixed";
     textArea.style.opacity = "0";
     document.body.appendChild(textArea);
-
     textArea.select();
     try {
       document.execCommand("copy");
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 750);
+      toast.success(successMessage);
     } catch (err) {
-      console.error("Failed to copy text: ", err);
+      toast.error(errorMessage);
     }
-
     document.body.removeChild(textArea);
   }
 };

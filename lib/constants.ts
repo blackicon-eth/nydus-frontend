@@ -3,3 +3,6 @@ export const BASE_USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
 
 // Ethereum empty address
 export const EMPTY_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+// Default avatar
+export const DEFAULT_AVATAR = "https://i.redd.it/0zhvko8u6ef51.jpg";

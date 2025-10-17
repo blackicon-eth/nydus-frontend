@@ -23,10 +23,12 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${_geist.className} ${_geistMono.className} antialiased`}>
+      <body className={`${_geist.className} ${_geistMono.className} cyber-grid antialiased`}>
         <Providers cookies={cookies}>
           <Navbar />
-          {children}
+          <main className="h-[calc(100vh-64px)] sm:h-[calc(100vh-80px)] mt-16 sm:mt-20">
+            {children}
+          </main>
         </Providers>
       </body>
     </html>

@@ -7,18 +7,16 @@ import { ArrowRight, Shield, Zap } from "lucide-react";
 
 export function LandingPage() {
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4">
-      <div className="max-w-4xl mx-auto text-center space-y-8">
+    <div className="h-full flex items-center justify-center px-4">
+      <div className="flex flex-col justify-center items-center max-w-4xl text-center gap-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-5xl md:text-7xl font-bold font-mono mb-4 glow-text">
-            CYPHER PROTOCOL
-          </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground font-mono">
-            Decentralized bridge and transfer protocol
+          <h1 className="text-5xl md:text-7xl font-bold mb-4 glow-text">NYDUS PROTOCOL</h1>
+          <p className="text-xl md:text-2xl text-muted-foreground">
+            The privacy protocol for the next generation of the internet.
           </p>
         </motion.div>
 
@@ -31,7 +29,7 @@ export function LandingPage() {
           <Link href={{ pathname: "/bridge" }} className="cursor-pointer">
             <Button
               size="lg"
-              className="font-mono bg-primary text-primary-foreground hover:bg-primary/90 glow-border"
+              className="bg-primary text-lg text-primary-foreground hover:bg-primary/90 glow-border"
             >
               Bridge Tokens
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -41,7 +39,7 @@ export function LandingPage() {
             <Button
               size="lg"
               variant="outline"
-              className="font-mono border-primary text-primary hover:bg-primary/10 bg-transparent"
+              className="border-primary text-lg text-primary hover:bg-primary/10 bg-transparent"
             >
               Transfer Tokens
               <ArrowRight className="ml-2 h-4 w-4" />
@@ -53,20 +51,20 @@ export function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="grid md:grid-cols-2 gap-6 mt-16"
+          className="grid md:grid-cols-2 gap-6 mt-12"
         >
-          <div className="p-6 rounded-lg border border-border bg-card/50 backdrop-blur">
+          <div className="p-6 rounded-lg border border-border bg-card/50 backdrop-blur hover:bg-card/70 transition-all duration-300">
             <Shield className="h-8 w-8 text-primary mb-4 mx-auto" />
-            <h3 className="font-mono text-lg font-bold mb-2">Secure</h3>
-            <p className="text-sm text-muted-foreground">
-              Military-grade encryption and decentralized architecture
+            <h3 className="text-lg font-bold mb-2">Secure</h3>
+            <p className="text-base text-muted-foreground">
+              ZK-based encryption and decentralized architecture
             </p>
           </div>
-          <div className="p-6 rounded-lg border border-border bg-card/50 backdrop-blur">
+          <div className="p-6 rounded-lg border border-border bg-card/50 backdrop-blur hover:bg-card/70 transition-all duration-300">
             <Zap className="h-8 w-8 text-primary mb-4 mx-auto" />
-            <h3 className="font-mono text-lg font-bold mb-2">Fast</h3>
-            <p className="text-sm text-muted-foreground">
-              Lightning-fast transactions with minimal fees
+            <h3 className="text-lg font-bold mb-2">Fast</h3>
+            <p className="text-base text-muted-foreground">
+              Fast and efficient transactions with minimal fees
             </p>
           </div>
         </motion.div>
