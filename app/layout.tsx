@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import "./globals.css";
 import Providers from "./providers";
 import { env } from "@/lib/zod";
+import { Navbar } from "@/components/custom-ui/navbar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,7 +23,10 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} size-full antialiased`}>
-          <Providers cookies={cookies}>{children}</Providers>
+        <Providers cookies={cookies}>
+          <Navbar />
+          {children}
+        </Providers>
       </body>
     </html>
   );
