@@ -12,10 +12,7 @@ import {
 import { basePreconf } from "@reown/appkit/networks";
 import { getWalletClient, switchChain } from "@wagmi/core";
 import type { Address } from "viem";
-import {
-  getTokenBalanceUSDValue,
-  type WalletBalanceData,
-} from "@/lib/lifi/utils";
+import { getTokenBalanceUSDValue, type WalletBalanceData } from "@/lib/lifi/utils";
 import { wagmiConfig } from "@/lib/reown";
 
 createConfig({
@@ -38,19 +35,14 @@ createConfig({
   ],
 });
 
-export const getWalletBalance = async (
-  walletAddress: Address
-): Promise<WalletBalanceData> => {
+export const getWalletBalance = async (walletAddress: Address): Promise<WalletBalanceData> => {
   try {
     const tokensResponse = await getTokens({
       chainTypes: [ChainType.EVM],
       minPriceUSD: 0.1,
     });
 
-    const tokenBalances = await getTokenBalancesByChain(
-      walletAddress,
-      tokensResponse.tokens
-    );
+    const tokenBalances = await getTokenBalancesByChain(walletAddress, tokensResponse.tokens);
 
     // Filter tokens with positive balances while maintaining the original structure
     const filteredTokenBalances: { [chainId: number]: TokenAmount[] } = {};
@@ -64,11 +56,7 @@ export const getWalletBalance = async (
     // get wallet total balance in USD
     const walletTotalBalanceUSD = Object.values(filteredTokenBalances).reduce(
       (total, balances) =>
-        total +
-        balances.reduce(
-          (sum, balance) => sum + getTokenBalanceUSDValue(balance),
-          0
-        ),
+        total + balances.reduce((sum, balance) => sum + getTokenBalanceUSDValue(balance), 0),
       0
     );
     return {

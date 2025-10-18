@@ -86,7 +86,10 @@ export function Navbar() {
           <div className="flex h-16 sm:h-20 items-center justify-between">
             {/* Desktop Logo - Left */}
             <Link href="/" className="hidden md:block cursor-pointer">
-              <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-2">
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                className="flex items-center gap-2 w-[353px]"
+              >
                 <div className="relative size-9">
                   <div className="absolute inset-0 rounded-lg bg-primary/20 blur-sm" />
                   <div className="relative flex h-full w-full items-center justify-center rounded-lg border border-primary bg-card">
@@ -127,20 +130,8 @@ export function Navbar() {
               ))}
             </div>
 
-            {/* Nydus Auth Status */}
-            {address && (
-              <div className="hidden md:flex items-center gap-2 mr-4">
-                <div
-                  className={`h-2 w-2 rounded-full ${isAuthenticated ? "bg-green-400" : "bg-yellow-400"}`}
-                ></div>
-                <span className="text-sm text-muted-foreground">
-                  {isAuthenticated ? "Nydus Authenticated" : "Nydus Pending"}
-                </span>
-              </div>
-            )}
-
             {/* Desktop Connect Button */}
-            <div className="hidden md:block w-[190px]">
+            <div className="hidden md:block w-[353px]">
               <AnimatePresence mode="wait">
                 {!mounted || isFetchingName ? (
                   <motion.div
@@ -176,8 +167,16 @@ export function Navbar() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="flex items-center justify-end w-full"
+                    className="flex items-center justify-end w-full gap-10"
                   >
+                    <div className="hidden md:flex items-center gap-2 shrink-0">
+                      <div
+                        className={`size-2 rounded-full shrink-0 ${isAuthenticated ? "bg-green-400" : "bg-yellow-400"}`}
+                      />
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {isAuthenticated ? "Nydus Authenticated" : "Nydus Pending"}
+                      </p>
+                    </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger className="flex items-center justify-center gap-3 cursor-pointer">
                         <span className="text-lg text-muted-foreground">{username}</span>

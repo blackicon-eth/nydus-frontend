@@ -1,33 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
-import { ArrowRight, Info } from "lucide-react";
-import { Button } from "@/components/shadcn-ui/button";
-import { Input } from "@/components/shadcn-ui/input";
-import { Label } from "@/components/shadcn-ui/label";
+import { Info } from "lucide-react";
 import { Card } from "@/components/shadcn-ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/shadcn-ui/select";
 import { NydusTabs } from "@/components/custom-ui/nydus-tabs";
-import Image from "next/image";
 import { Separator } from "@/components/shadcn-ui/separator";
-
-enum BridgeTab {
-  DEPOSIT = "deposit",
-  WITHDRAW = "withdraw",
-}
+import { useAccount } from "wagmi";
+import { useETHPrice } from "@/hooks/use-eth-price";
+import { useWalletBalance } from "@/hooks/use-wallet-balance";
+import { BridgeTab } from "@/lib/types/enums";
+import { FromToSection } from "@/components/custom-ui/bridge/from-to-section";
+import { InputAmount } from "@/components/custom-ui/bridge/input-amout";
+import { BridgeMainButton } from "@/components/custom-ui/bridge/bridge-main-button";
 
 export default function BridgePage() {
   const [activeTab, setActiveTab] = useState<BridgeTab>(BridgeTab.DEPOSIT);
+  const [inputAmount, setInputAmount] = useState<string>("");
+  const [mounted, setMounted] = useState(false);
+
+  // hooks
+  const [selectedToken, setSelectedToken] = useState<string>("eth");
+  const { data: ethPrice, isLoading: isLoadingEthPrice } = useETHPrice();
+  const { ethBalance, usdcBalance, isLoading: isLoadingWalletBalances } = useWalletBalance();
+  const { address } = useAccount();
+
+  // Set mounted to true after component mounts on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Whether the input amount is valid
+  const isInputAmountValid = Boolean(
+    useMemo(() => {
+      if (selectedToken === "eth") {
+        return (
+          Number(inputAmount) > 0 &&
+          ethBalance?.formatted &&
+          Number(inputAmount) <= Number(ethBalance.formatted)
+        );
+      }
+      return (
+        Number(inputAmount) > 0 &&
+        usdcBalance?.formatted &&
+        Number(inputAmount) <= Number(usdcBalance.formatted)
+      );
+    }, [selectedToken, inputAmount, ethBalance, usdcBalance])
+  );
+
+  // When the input token changes, set the input amount to empty string
+  useEffect(() => {
+    setInputAmount("");
+  }, [selectedToken, address, activeTab]);
+
+  // Whether the wallet is connected
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] py-12 px-4">
+    <div className="h-full py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -54,79 +83,33 @@ export default function BridgePage() {
             />
 
             {/* From/To Section */}
-            <div className="space-y-4 mb-6">
-              <div className="flex justify-between items-center gap-4">
-                <div className="flex flex-col justify-center items-start gap-2 w-[30%] shrink-0">
-                  <Label className="text-sm text-muted-foreground">From</Label>
-                  <div className="flex items-center gap-2 border border-border rounded-lg p-2 w-full">
-                    <Image src="/chains/arbitrum-logo.svg" alt="Arbitrum" width={20} height={20} />
-                    Arbitrum
-                  </div>
-                </div>
-
-                <div className="flex justify-center h-full">
-                  <div className="p-2 rounded-lg bg-secondary border border-border">
-                    <ArrowRight className="h-5 w-5 text-primary" />
-                  </div>
-                </div>
-
-                <div className="space-y-2 w-[30%] shrink-0">
-                  <Label className="text-sm text-muted-foreground">To</Label>
-                  <div className="flex items-center gap-2 border border-border rounded-lg p-2 w-full">
-                    {/* <Image src="/chains/nydus-logo.svg" alt="NYDUS" width={20} height={20} /> */}
-                    NYDUS
-                  </div>
-                </div>
-              </div>
-            </div>
+            <FromToSection activeTab={activeTab} />
 
             <Separator />
 
             {/* Amount Input */}
-            <div className="space-y-2 mb-6">
-              <Label className="text-xs text-muted-foreground">Amount</Label>
-              <div className="relative">
-                <Input
-                  type="number"
-                  placeholder="0"
-                  className="bg-secondary border-border text-2xl h-16 pr-32"
-                />
-                <Select defaultValue="eth">
-                  <SelectTrigger className="absolute right-2 top-1/2 -translate-y-1/2 w-28 bg-card border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="eth">
-                      <div className="flex items-center gap-2">
-                        <div className="h-4 w-4 rounded-full bg-primary/20" />
-                        ETH
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="usdc">
-                      <div className="flex items-center gap-2">
-                        <div className="h-4 w-4 rounded-full bg-accent/20" />
-                        USDC
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="usdt">
-                      <div className="flex items-center gap-2">
-                        <div className="h-4 w-4 rounded-full bg-accent/20" />
-                        USDT
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>$0</span>
-                <span>Balance: 0.00</span>
-              </div>
-            </div>
+            <InputAmount
+              inputAmount={inputAmount}
+              setInputAmount={setInputAmount}
+              selectedToken={selectedToken}
+              setSelectedToken={setSelectedToken}
+              address={address}
+              ethPrice={ethPrice || 0}
+              isLoadingEthPrice={isLoadingEthPrice}
+              usdcBalance={usdcBalance?.formatted || "0"}
+              ethBalance={ethBalance?.formatted || "0"}
+              isLoadingWalletBalances={isLoadingWalletBalances}
+            />
 
             {/* Connect Wallet Button */}
-            <Button className="w-full h-14 text-lg bg-primary text-primary-foreground hover:bg-primary/90 glow-border">
-              Connect Wallet
-            </Button>
+            <BridgeMainButton
+              mounted={mounted}
+              address={address}
+              inputAmount={inputAmount}
+              isInputAmountValid={isInputAmountValid}
+              isLoadingWalletBalances={isLoadingWalletBalances}
+              isLoadingEthPrice={isLoadingEthPrice}
+            />
 
             {/* Info */}
             <div className="mt-6 flex justify-start items-center gap-2 text-xs text-muted-foreground">
