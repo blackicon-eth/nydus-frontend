@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion } from "motion/react";
 import { ArrowRight, Info } from "lucide-react";
 import { Button } from "@/components/shadcn-ui/button";
