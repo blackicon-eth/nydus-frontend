@@ -222,6 +222,11 @@ export default function TransferPage() {
 
       // All values are now hardcoded - no dynamic calculations needed
 
+      // Generate user_key from public key coordinates (same as bridge page)
+      const pubKeyCoords = publicKeyX + publicKeyY.slice(2); // Remove 0x from Y
+      const coordsHash = keccak256(stringToHex(pubKeyCoords));
+      const userKey = coordsHash.slice(0, 62); // 31 bytes = 62 hex chars
+
       // Use EXACT hardcoded values as specified - NO DYNAMIC VALUES
       const inputs = {
         amount: "0x32",
@@ -240,8 +245,8 @@ export default function TransferPage() {
           "0x09b61b4d3868115549b3746d1d92583c079884ebffe17d5167bf385ed6408e84",
           "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00", "0x00"
         ],
-        token_address: "0x58002bee8f43bf203964d38c54fa03e62d615959fa",
-        user_key: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+        token_address: "0x036CbD53842c5426634e7929541eC2318f3dCF7e", // USDC address
+        user_key: userKey, // Use generated user key from public key coordinates
         master_tree_root: "0x2df510686c8a0028928fde220e3059fabe22f3ce3df3ec099811e051e77ef58d",
         personal_imt_root_proof: [
           "0x0c0e544bae08a03231d737d86976f2d342d4daea2649d6cccfe6ad0271149bc5",

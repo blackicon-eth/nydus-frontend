@@ -16,7 +16,7 @@ import {
 } from "@/components/shadcn-ui/select";
 import { Switch } from "@/components/shadcn-ui/switch";
 import { useAccount } from "wagmi";
-import { createWalletClient, custom, recoverMessageAddress, keccak256, stringToHex, recoverPublicKey } from "viem";
+import { createWalletClient, custom, recoverMessageAddress, keccak256, stringToHex, recoverPublicKey, writeContract } from "viem";
 import { sepolia } from "viem/chains";
 import { Noir } from "@noir-lang/noir_js";
 import circuit from "@/public/circuits/nydus_entry.json";
@@ -24,11 +24,26 @@ import { useNydusAuth } from "@/lib/contexts/NydusAuthContext";
 
 const NYDUS_MESSAGE = "Welcome to the Nydus! \n\nThis signature on this message will be used to access the Nydus network. This signature is your access key to the network and needed for clientside proving. \nMake sure you don't pass this signature to someone else! \n\nCaution: Please make sure that the domain you are connected to is correct.";
 
+// Nydus contract address and ABI
+const NYDUS_ADDRESS = "0x0000000000000000000000000000000000000000"; // Replace with actual contract address
+const NYDUS_ABI = [
+  {
+    "inputs": [
+      { "internalType": "bytes", "name": "_proof", "type": "bytes" },
+      { "internalType": "bytes32[]", "name": "_publicInputs", "type": "bytes32[]" }
+    ],
+    "name": "initCommit",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  }
+] as const;
+
 export default function BridgePage() {
   const [activeTab, setActiveTab] = useState<"deposit" | "withdraw">("deposit");
   const [useCustomAddress, setUseCustomAddress] = useState(false);
   const [amount, setAmount] = useState("");
-  const [selectedToken, setSelectedToken] = useState("eth");
+  const [selectedToken, setSelectedToken] = useState("usdc");
   const [customAddress, setCustomAddress] = useState("");
 
   // Wallet connection
@@ -58,6 +73,7 @@ export default function BridgePage() {
   const [error, setError] = useState<string | null>(null);
   const [isProving, setIsProving] = useState(false);
   const [proof, setProof] = useState<string>("");
+  const [publicInputs, setPublicInputs] = useState<string[]>([]);
   const [proofError, setProofError] = useState<string | null>(null);
   const [provingTime, setProvingTime] = useState<number | null>(null);
   const [currentProvingTime, setCurrentProvingTime] = useState<number>(0);
@@ -211,8 +227,15 @@ export default function BridgePage() {
         throw new Error('Failed to initialize Noir circuit');
       }
 
-      // Process signature: Keccak256 and cut last byte for user_key
-      const userKey = signatureHash.slice(0, -2); // Remove last byte (2 hex chars)
+      // Generate user_key from public key coordinates
+      // Concatenate public key X and Y coordinates
+      const pubKeyCoords = publicKeyX + publicKeyY.slice(2); // Remove 0x from Y
+
+      // Hash the concatenated coordinates with keccak256
+      const coordsHash = keccak256(stringToHex(pubKeyCoords));
+
+      // Slice to 31 bytes (62 hex characters) for Noir Field
+      const userKey = coordsHash.slice(0, 62); // 31 bytes = 62 hex chars
 
       // Convert amount to hex (ensure it's a positive integer)
       // For ETH, convert to wei (1 ETH = 10^18 wei)
@@ -226,9 +249,13 @@ export default function BridgePage() {
       // Token address based on selection
       const tokenAddress = selectedToken === "eth"
         ? "0x0000000000000000000000000000000000000000"
-        : "0x00000000000000000000000058002bee8f43bf203964d38c54fa03e62d615959fa";
+        : "0x036CbD53842c5426634e7929541eC2318f3dCF7e"; // USDC address
 
       console.log('Circuit inputs:');
+      console.log('publicKeyX:', publicKeyX);
+      console.log('publicKeyY:', publicKeyY);
+      console.log('pubKeyCoords:', pubKeyCoords);
+      console.log('coordsHash:', coordsHash);
       console.log('user_key:', userKey);
       console.log('user_key length:', userKey.length);
       console.log('token_address:', tokenAddress);
@@ -244,10 +271,16 @@ export default function BridgePage() {
         amount: amountHex
       };
 
-      // Generate witness
-      console.log('🔄 Generating witness...');
+      // Initialize Noir and backend
+      const noir = new Noir(circuit as any);
+      const threads = window.navigator.hardwareConcurrency;
+      // For browser compatibility, we'll use a mock backend
+      console.log('🔄 Generating witness with keccak flag...');
       const witnessStartTime = performance.now();
-      const { witness } = await noirRef.current.execute(inputs);
+
+      //@ts-ignore
+      const { witness } = await noir.execute(inputs, { keccak: true });
+      console.log('Circuit execution result:', witness);
       const witnessEndTime = performance.now();
       const witnessTime = Math.round(witnessEndTime - witnessStartTime);
       console.log(`✅ Witness generated in ${witnessTime}ms`);
@@ -265,7 +298,9 @@ export default function BridgePage() {
         mockProof[i] = Math.floor(Math.random() * 256);
       }
 
-      const proofHex = Buffer.from(mockProof).toString('hex');
+      const proofBytes = `0x${Buffer.from(mockProof).toString('hex')}`;
+      const publicInputsArray = ['0x1', '0x2', '0x3', '0x4', '0x5', '0x6', '0x7', '0x8']; // Mock public inputs
+
       const proofEndTime = performance.now();
       const proofTime = Math.round(proofEndTime - proofStartTime);
       console.log(`✅ Mock proof generated in ${proofTime}ms`);
@@ -275,8 +310,11 @@ export default function BridgePage() {
       const provingTimeMs = Math.round(endTime - startTime);
       setProvingTime(provingTimeMs);
 
-      setProof(proofHex);
-      console.log('Proof generated successfully:', proofHex);
+      // Set the proof state
+      setProof(proofBytes);
+      setPublicInputs(publicInputsArray);
+      console.log('Proof generated successfully:', proofBytes);
+      console.log('Public inputs:', publicInputsArray);
       console.log(`Total proving time: ${provingTimeMs}ms`);
       console.log(`📊 Breakdown: Witness=${witnessTime}ms, Mock Proof=${proofTime}ms`);
 
@@ -285,6 +323,41 @@ export default function BridgePage() {
       setProofError(error instanceof Error ? error.message : 'Failed to generate proof');
     } finally {
       setIsProving(false);
+    }
+  };
+
+  // Handle contract interaction
+  const handleInitialize = async () => {
+    if (!address) {
+      alert('Please connect your wallet first');
+      return;
+    }
+
+    if (!proof || publicInputs.length === 0) {
+      alert('Please generate a proof first');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const slicedInputs = publicInputs.slice(0, 8); // Using 8 public inputs as specified
+      await writeContract({
+        address: NYDUS_ADDRESS,
+        abi: NYDUS_ABI,
+        functionName: 'initCommit',
+        args: [proof as `0x${string}`, slicedInputs as readonly `0x${string}`[]],
+        value: BigInt(amount || "0")
+      });
+
+      console.log("amount", amount);
+      console.log("inputs", slicedInputs as readonly `0x${string}`[]);
+      console.log("proof", proof as `0x${string}`);
+
+    } catch (error) {
+      console.error('Error:', error);
+      setError(error instanceof Error ? error.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -659,8 +732,8 @@ export default function BridgePage() {
                         </div>
                       </div>
 
-                      {/* Verification Button */}
-                      <div className="mt-4 pt-4 border-t border-green-500/30">
+                      {/* Action Buttons */}
+                      <div className="mt-4 pt-4 border-t border-green-500/30 space-y-2">
                         <Button
                           onClick={handleVerifyProof}
                           disabled={isVerifying}
@@ -675,6 +748,24 @@ export default function BridgePage() {
                             <div className="flex items-center gap-2">
                               <Shield className="h-4 w-4" />
                               <span>Verify Proof</span>
+                            </div>
+                          )}
+                        </Button>
+
+                        <Button
+                          onClick={handleInitialize}
+                          disabled={isLoading || !proof || publicInputs.length === 0}
+                          className="w-full h-10 text-sm bg-orange-600 hover:bg-orange-700 text-white disabled:opacity-50"
+                        >
+                          {isLoading ? (
+                            <div className="flex items-center gap-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              <span>Initializing Nydus...</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <Zap className="h-4 w-4" />
+                              <span>Initialize Nydus Entry</span>
                             </div>
                           )}
                         </Button>
