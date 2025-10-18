@@ -29,8 +29,9 @@ export function Navbar() {
   const [mounted, setMounted] = useState(false);
   const { address } = useAccount();
   const { open } = useAppKit();
-  const { isAuthenticated, publicKeyX, publicKeyY } = useNydusAuth();
+  const { isAuthenticated } = useNydusAuth();
 
+  // Navbar links
   const navLinks = [
     { href: "/bridge", label: "Bridge" },
     { href: "/transfer", label: "Transfer" },
@@ -61,17 +62,6 @@ export function Navbar() {
   }, [address]);
 
   return (
-              {/* Nydus Auth Status */}
-              {address && (
-                <div className="hidden md:flex items-center gap-2 mr-4">
-                  <div className={`h-2 w-2 rounded-full ${isAuthenticated ? 'bg-green-400' : 'bg-yellow-400'}`}></div>
-                  <span className="text-sm text-muted-foreground">
-                    {isAuthenticated ? 'Nydus Authenticated' : 'Nydus Pending'}
-                  </span>
-                </div>
-              )}
-
-      {/* Mobile Menu */}
     <div className="relative">
       {/* Dimming Overlay */}
       <AnimatePresence>
@@ -136,6 +126,18 @@ export function Navbar() {
                 </Link>
               ))}
             </div>
+
+            {/* Nydus Auth Status */}
+            {address && (
+              <div className="hidden md:flex items-center gap-2 mr-4">
+                <div
+                  className={`h-2 w-2 rounded-full ${isAuthenticated ? "bg-green-400" : "bg-yellow-400"}`}
+                ></div>
+                <span className="text-sm text-muted-foreground">
+                  {isAuthenticated ? "Nydus Authenticated" : "Nydus Pending"}
+                </span>
+              </div>
+            )}
 
             {/* Desktop Connect Button */}
             <div className="hidden md:block w-[190px]">
