@@ -1,15 +1,15 @@
 /**
  * Nydus Crypto Library
- * 
+ *
  * This library provides cryptographic utilities for the Nydus network,
  * including Diffie-Hellman key exchange and Poseidon CTR encryption.
  */
 
 // Re-export all DH utilities
-export * from './dh-utils';
+export * from "./dh-utils";
 
 // Re-export all Poseidon CTR encryption utilities
-export * from './poseidon-ctr-encryption';
+export * from "./poseidon-ctr-encryption";
 
 // Convenience exports for common functions
 export {
@@ -18,8 +18,8 @@ export {
   testDHKeyExchange,
   type Point,
   type KeyPair,
-  type DHResult
-} from './dh-utils';
+  type DHResult,
+} from "./dh-utils";
 
 export {
   poseidonKeystream,
@@ -27,5 +27,5 @@ export {
   poseidonCtrDecrypt,
   poseidonEncryptAllFields,
   poseidonEncryptAllFieldsArray,
-  testPoseidonCtrEncryption
-} from './poseidon-ctr-encryption';
+  testPoseidonCtrEncryption,
+} from "./poseidon-ctr-encryption";
