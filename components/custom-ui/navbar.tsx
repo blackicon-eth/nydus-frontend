@@ -11,7 +11,7 @@ import { useAppKit } from "@reown/appkit/react";
 import { useAccount } from "wagmi";
 import { getEnsAvatar, getEnsName } from "@/lib/ens/client";
 import { DEFAULT_AVATAR } from "@/lib/constants";
-import { useNydusAuth } from "@/lib/contexts/NydusAuthContext";
+import { useNydusAuth } from "@/contexts/nydus-auth-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,7 +47,14 @@ export function Navbar() {
 
   // When the user connects their wallet, set the username
   useEffect(() => {
-    if (!address) return;
+    // If there is no address, reset the username and avatar
+    if (!address) {
+      setUsername(null);
+      setAvatar(null);
+      return;
+    }
+
+    // Fetch the username and avatar
     const fetchUsername = async () => {
       setIsFetchingName(true);
       const username = await getEnsName(address);
@@ -58,6 +65,7 @@ export function Navbar() {
       }
       setIsFetchingName(false);
     };
+
     fetchUsername();
   }, [address]);
 
@@ -140,9 +148,9 @@ export function Navbar() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="flex items-center justify-center w-full"
+                    className="flex items-center justify-end w-full"
                   >
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    <Loader2 className="size-6 animate-spin text-primary mr-4" />
                   </motion.div>
                 ) : !address ? (
                   <motion.div
@@ -195,7 +203,7 @@ export function Navbar() {
                           }
                           className="flex items-center justify-start gap-2 cursor-pointer w-full"
                         >
-                          Copy <Copy />
+                          Copy Address <Copy />
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <Button

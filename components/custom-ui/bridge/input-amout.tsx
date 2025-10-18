@@ -12,7 +12,6 @@ import { Skeleton } from "@/components/shadcn-ui/skeleton";
 import { AnimatePresence, motion } from "motion/react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Address } from "viem";
-import { useETHPrice } from "@/hooks/use-eth-price";
 
 interface InputAmountProps {
   inputAmount: string;

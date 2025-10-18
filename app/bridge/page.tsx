@@ -87,7 +87,7 @@ export default function BridgePage() {
 
             <Separator />
 
-            {/* Amount Input */}
+            {/* Input Amount */}
             <InputAmount
               inputAmount={inputAmount}
               setInputAmount={setInputAmount}

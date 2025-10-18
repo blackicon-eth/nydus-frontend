@@ -1,22 +1,52 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Send, Info, User } from "lucide-react";
-import { Button } from "@/components/shadcn-ui/button";
+import { Info, User } from "lucide-react";
 import { Input } from "@/components/shadcn-ui/input";
 import { Label } from "@/components/shadcn-ui/label";
 import { Card } from "@/components/shadcn-ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/shadcn-ui/select";
+import { InputAmount } from "@/components/custom-ui/bridge/input-amout";
+import { useEffect, useMemo, useState } from "react";
+import { useETHPrice } from "@/hooks/use-eth-price";
+import { useAccount } from "wagmi";
+import { useWalletBalance } from "@/hooks/use-wallet-balance";
+import { TransferMainButton } from "@/components/custom-ui/transfer/transfer-main-button";
 
 export default function TransferPage() {
+  const [inputAmount, setInputAmount] = useState<string>("");
+  const [selectedToken, setSelectedToken] = useState<string>("eth");
+  const [mounted, setMounted] = useState(false);
+
+  // hooks
+  const { address } = useAccount();
+  const { data: ethPrice, isLoading: isLoadingEthPrice } = useETHPrice();
+  const { ethBalance, usdcBalance, isLoading: isLoadingWalletBalances } = useWalletBalance();
+
+  // Whether the input amount is valid
+  const isInputAmountValid = Boolean(
+    useMemo(() => {
+      if (selectedToken === "eth") {
+        return (
+          Number(inputAmount) > 0 &&
+          ethBalance?.formatted &&
+          Number(inputAmount) <= Number(ethBalance.formatted)
+        );
+      }
+      return (
+        Number(inputAmount) > 0 &&
+        usdcBalance?.formatted &&
+        Number(inputAmount) <= Number(usdcBalance.formatted)
+      );
+    }, [selectedToken, inputAmount, ethBalance, usdcBalance])
+  );
+
+  // Set mounted to true after component mounts on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
-    <div className="min-h-[calc(100vh-4rem)] py-12 px-4">
+    <div className="h-full py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -32,86 +62,35 @@ export default function TransferPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="p-6 bg-card/50 backdrop-blur border-border glow-border">
+          <Card className="flex flex-col gap-10 p-6 bg-card/50 backdrop-blur border-border glow-border">
             {/* Recipient Address */}
-            <div className="space-y-2 mb-6">
-              <Label className="text-xs text-muted-foreground">Recipient Address</Label>
+            <div className="space-y-2">
+              <Label className="text-sm text-muted-foreground">Recipient Address</Label>
               <div className="relative">
                 <Input placeholder="0x..." className="bg-secondary border-border pl-10" />
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Enter the wallet address of the recipient
+              <p className="text-sm text-muted-foreground">
+                Enter the <b>Nydus address</b> of the recipient
               </p>
             </div>
 
-            {/* Token Selection */}
-            <div className="space-y-2 mb-6">
-              <Label className="text-xs text-muted-foreground">Token</Label>
-              <Select defaultValue="eth">
-                <SelectTrigger className="bg-secondary border-border">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="eth">
-                    <div className="flex items-center gap-2">
-                      <div className="h-5 w-5 rounded-full bg-primary/20" />
-                      <div>
-                        <p className="font-mono">ETH</p>
-                        <p className="text-xs text-muted-foreground">Ethereum</p>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="usdc">
-                    <div className="flex items-center gap-2">
-                      <div className="h-5 w-5 rounded-full bg-accent/20" />
-                      <div>
-                        <p className="font-mono">USDC</p>
-                        <p className="text-xs text-muted-foreground">USD Coin</p>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="usdt">
-                    <div className="flex items-center gap-2">
-                      <div className="h-5 w-5 rounded-full bg-accent/20" />
-                      <div>
-                        <p className="font-mono">USDT</p>
-                        <p className="text-xs text-muted-foreground">Tether</p>
-                      </div>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="dai">
-                    <div className="flex items-center gap-2">
-                      <div className="h-5 w-5 rounded-full bg-accent/20" />
-                      <div>
-                        <p className="font-mono">DAI</p>
-                        <p className="text-xs text-muted-foreground">Dai Stablecoin</p>
-                      </div>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Amount Input */}
-            <div className="space-y-2 mb-6">
-              <div className="flex justify-between items-center">
-                <Label className="text-xs text-muted-foreground">Amount</Label>
-                <button className="text-xs text-primary hover:underline">Max</button>
-              </div>
-              <Input
-                type="number"
-                placeholder="0.00"
-                className="bg-secondary border-border text-2xl h-16"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>$ 0.00</span>
-                <span>Available: 0.00 ETH</span>
-              </div>
-            </div>
+            {/* Input Amount */}
+            <InputAmount
+              inputAmount={inputAmount}
+              setInputAmount={setInputAmount}
+              selectedToken={selectedToken}
+              setSelectedToken={setSelectedToken}
+              address={address}
+              ethPrice={ethPrice || 0}
+              isLoadingEthPrice={isLoadingEthPrice}
+              usdcBalance={usdcBalance?.formatted || "0"}
+              ethBalance={ethBalance?.formatted || "0"}
+              isLoadingWalletBalances={isLoadingWalletBalances}
+            />
 
             {/* Transaction Summary */}
-            <div className="space-y-3 mb-6 p-4 rounded-lg bg-secondary/50">
+            <div className="space-y-3 p-4 rounded-lg bg-secondary/50">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Network Fee</span>
                 <span className="text-foreground">~$0.00</span>
@@ -128,31 +107,22 @@ export default function TransferPage() {
             </div>
 
             {/* Send Button */}
-            <Button className="w-full h-14 text-lg bg-primary text-primary-foreground hover:bg-primary/90 glow-border">
-              <Send className="mr-2 h-5 w-5" />
-              Send Tokens
-            </Button>
+            <TransferMainButton
+              mounted={mounted}
+              address={address}
+              inputAmount={inputAmount}
+              isInputAmountValid={isInputAmountValid}
+              isLoadingWalletBalances={isLoadingWalletBalances}
+              isLoadingEthPrice={isLoadingEthPrice}
+            />
 
             {/* Info */}
             <div className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
-              <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <Info className="size-4 shrink-0" />
               <p>
                 Double-check the recipient address before sending. Transactions cannot be reversed.
               </p>
             </div>
-          </Card>
-        </motion.div>
-
-        {/* Recent Transfers */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mt-8"
-        >
-          <h2 className="text-xl font-bold mb-4 text-primary">Recent Transfers</h2>
-          <Card className="p-6 bg-card/30 backdrop-blur border-border text-center">
-            <p className="text-sm text-muted-foreground">No recent transfers found</p>
           </Card>
         </motion.div>
       </div>
