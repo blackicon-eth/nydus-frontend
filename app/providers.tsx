@@ -3,6 +3,7 @@
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "sonner";
 import { CustomWagmiProvider } from "@/contexts/customWagmiProvider";
+import { NydusAuthProvider } from "@/lib/contexts/NydusAuthContext";
 
 
 interface ProvidersProps {
@@ -14,8 +15,10 @@ export default function Providers({ children, cookies }: ProvidersProps) {
   return (
     <NuqsAdapter>
       <CustomWagmiProvider cookies={cookies}>
+        <NydusAuthProvider>
           {children}
           <Toaster richColors position="top-right" />
+        </NydusAuthProvider>
       </CustomWagmiProvider>
     </NuqsAdapter>
   );

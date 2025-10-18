@@ -11,6 +11,7 @@ import { useAppKit } from "@reown/appkit/react";
 import { useAccount } from "wagmi";
 import { getEnsAvatar, getEnsName } from "@/lib/ens/client";
 import { DEFAULT_AVATAR } from "@/lib/constants";
+import { useNydusAuth } from "@/lib/contexts/NydusAuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,7 @@ export function Navbar() {
   const [mounted, setMounted] = useState(false);
   const { address } = useAccount();
   const { open } = useAppKit();
+  const { isAuthenticated, publicKeyX, publicKeyY } = useNydusAuth();
 
   const navLinks = [
     { href: "/bridge", label: "Bridge" },
@@ -108,6 +110,16 @@ export function Navbar() {
               </Link>
             ))}
           </div>
+
+          {/* Nydus Auth Status */}
+          {address && (
+            <div className="hidden md:flex items-center gap-2 mr-4">
+              <div className={`h-2 w-2 rounded-full ${isAuthenticated ? 'bg-green-400' : 'bg-yellow-400'}`}></div>
+              <span className="text-sm text-muted-foreground">
+                {isAuthenticated ? 'Nydus Authenticated' : 'Nydus Pending'}
+              </span>
+            </div>
+          )}
 
           {/* Desktop Connect Button */}
           <div className="hidden md:block w-[190px]">
