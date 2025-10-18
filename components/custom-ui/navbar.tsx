@@ -35,6 +35,7 @@ export function Navbar() {
   const navLinks = [
     { href: "/bridge", label: "Bridge" },
     { href: "/transfer", label: "Transfer" },
+    { href: "/activity", label: "Activity" },
   ];
 
   // Pathname
